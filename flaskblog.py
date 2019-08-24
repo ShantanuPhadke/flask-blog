@@ -3,7 +3,6 @@ from forms import RegistrationForm, LoginForm
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = '8479fd7bef4ebf6c264fd36063af37b8'
-
 # Dummy post data, valuable because it tells us the proper
 # schema for individual Post Objects
 posts = [
@@ -51,7 +50,6 @@ def login():
 			flash('Login Unsuccessful. Please check username and password', 'danger')
 	# SAMPLE VALIDATION ABOVE
 	return render_template('login.html', title='Login', form=login_form)
-
 
 if __name__ == '__main__':
 	app.run(debug=True)
