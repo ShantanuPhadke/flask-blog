@@ -1,8 +1,10 @@
-from flask import Flask , render_template, url_for, flash, redirect
-from forms import RegistrationForm, LoginForm
-app = Flask(__name__)
+from flask import render_template, url_for, flash, redirect
+from flaskblog import app
+# Since both the forms and models are now inside the flaskblog folder, we use
+# these are what the new imports would look like.
+from flaskblog.forms import RegistrationForm, LoginForm
+from flaskblog.models import User, Post
 
-app.config['SECRET_KEY'] = '8479fd7bef4ebf6c264fd36063af37b8'
 # Dummy post data, valuable because it tells us the proper
 # schema for individual Post Objects
 posts = [
@@ -50,6 +52,3 @@ def login():
 			flash('Login Unsuccessful. Please check username and password', 'danger')
 	# SAMPLE VALIDATION ABOVE
 	return render_template('login.html', title='Login', form=login_form)
-
-if __name__ == '__main__':
-	app.run(debug=True)
