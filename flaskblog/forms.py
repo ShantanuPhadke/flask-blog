@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from flaskblog.models import User
 
 class RegistrationForm(FlaskForm):
 	required_validator = DataRequired()
@@ -21,6 +22,20 @@ class RegistrationForm(FlaskForm):
 
 	submit = SubmitField('Sign Up')
 
+	# A function to check that the entered username is unique BEFORE we try to
+	# add it into our database
+	def validate_username(self, username):
+		user = User.query.filter_by(username=username.data).first()
+		if user:
+			raise ValidationError('That username is taken. Please choose a different one.')
+
+	# A function to check that the entered email is unique BEFORE we try to add
+	# it into our database
+	def validate_email(self, email):
+		user = User.query.filter_by(email=email.data).first()
+		if user:
+			raise ValidationError('That email is taken. Please choose a different one.')
+
 class LoginForm(FlaskForm):
 	required_validator = DataRequired()
 
@@ -31,7 +46,7 @@ class LoginForm(FlaskForm):
 	password_validators = [required_validator]
 	password = PasswordField('Password', validators=password_validators)
 
-	remember = BooleanField('Remember Me')
+	remember = BooleanField('Remember Me', default='checked', validators=[required_validator])
 
 	submit = SubmitField('Login')
 
