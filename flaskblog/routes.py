@@ -1,8 +1,12 @@
+import secrets
+import os
+# Pillow will be used to scale down any very large images uploaded to our site
+from PIL import Image
 from flask import render_template, url_for, flash, redirect, request
 from flaskblog import app, db, bcrypt
 # Since both the forms and models are now inside the flaskblog folder, we use
 # these are what the new imports would look like.
-from flaskblog.forms import RegistrationForm, LoginForm
+from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm
 from flaskblog.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
 
@@ -78,11 +82,46 @@ def logout():
 	logout_user()
 	return redirect(url_for('home'))
 
+# Helper function for saving the picture that is uploaded via the form
+# Takes in the actual picture from UpdateAccountForm
+def save_picture(form_picture):
+	# Generates a 8 byte hexadecimal we will use as the filename of the new
+	# profile image
+	random_hex = secrets.token_hex(8) 
+	# _ is just because we won't use the value of f_name
+	_, f_ext = os.path.splitext(form_picture.filename)
+	picture_fn = random_hex + f_ext
+	picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
+	
+	output_size = (125, 125)
+	i = Image.open(form_picture)
+	i.thumbnail(output_size)
+	i.save(picture_path)
+	i.save(picture_path)
+	return picture_fn
+
 # For the account endpoint we utilize the login_required decorator
 # in order to make sure that the user is already authenticated when
 # accessing the account page! If an user who isn't logged in tries to
 # access the Account page, they will be redirected to the Login form!
-@app.route("/account")
+@app.route("/account", methods=["GET", "POST"])
 @login_required
 def account():
-	return render_template('account.html', title="Account")
+	account_update_form = UpdateAccountForm()
+	# Logic for updating user info once the update account form is submitted
+	if account_update_form.validate_on_submit():
+		# Checking if there is any picture data, if there is we update the
+		# existing profile picture data
+		if account_update_form.picture.data:
+			picture_file = save_picture(account_update_form.picture.data)
+			current_user.image_file = picture_file
+		current_user.username = account_update_form.username.data
+		current_user.email = account_update_form.email.data
+		db.session.commit()
+		flash('Your account has been updated!', 'success')
+		return redirect(url_for('account'))
+	elif request.method == 'GET':
+		account_update_form.username.data = current_user.username
+		account_update_form.email.data = current_user.email
+	image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+	return render_template('account.html', title="Account", image_file=image_file, form=account_update_form)
